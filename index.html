@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini‑site IA Act & RGPD — Tests de prompts</title>
+  <style>
+    :root{
+      /* Thème clair */
+      --bg:#f8fafc;           /* slate-50 */
+      --panel:#ffffff;        /* white */
+      --muted:#475569;        /* slate-600 */
+      --text:#0f172a;         /* slate-900 */
+      --brand:#7c3aed;        /* violet-600 */
+      --brand-2:#0891b2;      /* cyan-600 */
+      --ok:#16a34a;           /* green-600 */
+      --ko:#dc2626;           /* red-600 */
+      --warn:#d97706;         /* amber-600 */
+      --card:#ffffff;
+      --accent:#e2e8f0;       /* slate-200 */
+      --ring: 0 0 0 3px rgba(124,58,237,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(124,58,237,.10), transparent 60%),
+        radial-gradient(1200px 800px at 110% 10%, rgba(8,145,178,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.1) blur(6px);
+      background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7));
+      border-bottom:1px solid var(--accent);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:18px 20px}
+    .title{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    .badge{font-size:12px; padding:4px 8px; border-radius:9999px; background:rgba(124,58,237,.10); color:#4338ca; border:1px solid rgba(124,58,237,.25)}
+    nav{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap}
+    nav button{background:var(--panel); border:1px solid var(--accent); color:#1f2937; padding:10px 14px; border-radius:10px; cursor:pointer}
+    nav button.active{background:linear-gradient(180deg,#ffffff,#f1f5f9); border-color:#cbd5e1; box-shadow:var(--ring)}
+
+    main{padding:28px 20px}
+    section[hidden]{display:none}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
+    .card{grid-column:span 12; background:linear-gradient(180deg,#ffffff,#f8fafc); border:1px solid var(--accent); border-radius:var(--radius); box-shadow:0 10px 30px rgba(2,6,23,.06)}
+    .card h2{margin:0 0 12px 0; font-size:22px}
+    .card h3{margin:0 0 8px 0; font-size:18px}
+    .card .hdr{padding:18px 18px 0 18px}
+    .card .cnt{padding:18px}
+    .muted{color:var(--muted)}
+
+    .two{grid-template-columns:repeat(12,1fr)}
+    .two .col{grid-column:span 12}
+    @media(min-width:860px){ .two .col-7{grid-column:span 7} .two .col-5{grid-column:span 5} }
+
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid #c7d2fe; background:#eef2ff; color:#3730a3; font-size:14px}
+    .list{display:grid; gap:12px}
+    .q{padding:14px; border:1px solid var(--accent); border-radius:12px; background:#f8fafc}
+    .q .choices{display:grid; gap:8px; margin-top:10px}
+    .q label{display:flex; gap:10px; align-items:flex-start; cursor:pointer}
+    .q input{margin-top:2px}
+
+    .btn{appearance:none; border:none; background:linear-gradient(180deg,#7c3aed,#5b21b6); color:white; padding:10px 14px; border-radius:10px; cursor:pointer}
+    .btn.secondary{background:#ffffff; color:#1f2937; border:1px solid var(--accent)}
+    .btn.ghost{background:transparent; border:1px dashed #94a3b8; color:#334155}
+    .btn.bad{background:linear-gradient(180deg,#ef4444,#b91c1c)}
+    .btn.good{background:linear-gradient(180deg,#16a34a,#166534)}
+    .inline{display:inline-flex; gap:10px; flex-wrap:wrap}
+
+    .feedback{margin-top:10px; padding:10px 12px; border-radius:10px; font-size:14px}
+    .ok{background:rgba(22,163,74,.10); border:1px solid rgba(22,163,74,.25)}
+    .ko{background:rgba(220,38,38,.10); border:1px solid rgba(220,38,38,.25)}
+    .hint{background:rgba(217,119,6,.10); border:1px solid rgba(217,119,6,.25)}
+
+    textarea{width:100%; min-height:150px; resize:vertical; border-radius:12px; border:1px solid var(--accent); background:#ffffff; color:var(--text); padding:12px}
+    input[type="text"], input[type="number"], select{width:100%; border-radius:10px; border:1px solid var(--accent); background:#ffffff; color:var(--text); padding:10px}
+
+    .rule{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .tag{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid #e9d5ff; background:#f5f3ff; font-size:12px; color:#6d28d9}
+    .score{font-weight:700; font-size:18px}
+
+    footer{margin-top:32px; border-top:1px solid var(--accent); color:#475569}
+    a{color:#6d28d9}
+    .small{font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" stroke="#7c3aed" fill="none" stroke-width="1.2"/>
+        </svg>
+        <div>
+          <div style="font-size:20px; font-weight:700">IA Act & RGPD — Tests de prompts</div>
+          <div class="muted small">Mini‑site pédagogique — version autonome (HTML/JS). Aucun suivi externe. Conforme à un usage formation (non‑juridique).</div>
+        </div>
+        <span class="badge">Formateur · Mode local</span>
+      </div>
+      <nav aria-label="Navigation des sections">
+        <button class="active" data-target="home">Accueil</button>
+        <button data-target="quiz-ia">Quiz IA Act</button>
+        <button data-target="quiz-rgpd">Quiz RGPD</button>
+        <button data-target="analyzer">Analyseur de prompt</button>
+        <button data-target="cases">Cas pratiques</button>
+        <button data-target="results">Résultats</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="home">
+      <div class="card">
+        <div class="hdr">
+          <h2>Bienvenue 👋</h2>
+          <p class="muted">Ce mini‑site aide vos stagiaires à reconnaître les risques IA Act et RGPD dans des <em>prompts</em> et à écrire des consignes conformes (minimisation, transparence, sécurité).</p>
+        </div>
+        <div class="cnt grid two">
+          <div class="col col-7">
+            <div class="list">
+              <div class="pill">🧭 Objectif 1 · Identifier les cas d’usage à risque (IA Act)</div>
+              <div class="pill">🔐 Objectif 2 · Détecter les données personnelles / sensibles (RGPD)</div>
+              <div class="pill">✍️ Objectif 3 · Réécrire un prompt pour le rendre conforme</div>
+            </div>
+            <div style="margin-top:16px" class="inline">
+              <button class="btn" data-go="quiz-ia">Démarrer — Quiz IA Act</button>
+              <button class="btn secondary" data-go="analyzer">Tester un prompt</button>
+            </div>
+          </div>
+          <div class="col col-5">
+            <div class="q">
+              <h3>Règles pédagogiques</h3>
+              <ul>
+                <li>Feedback immédiat + explications</li>
+                <li>Score cumulé par section et global</li>
+                <li>Aucun envoi de données — tout reste dans le navigateur</li>
+              </ul>
+              <div class="small muted">⚠️ Outil de formation. Pour un avis juridique, rapprochez‑vous d’un spécialiste.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz-ia" hidden>
+      <div class="card">
+        <div class="hdr"><h2>Quiz IA Act (10 questions)</h2>
+          <p class="muted">Répondez, puis cliquez « Valider ». Certaines questions ont plusieurs bonnes réponses.</p></div>
+        <div class="cnt list" id="quizIAContainer" aria-live="polite"></div>
+        <div class="cnt inline">
+          <button class="btn" id="validateIA">Valider</button>
+          <button class="btn ghost" id="resetIA">Réinitialiser</button>
+          <div class="score" id="scoreIA" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz-rgpd" hidden>
+      <div class="card">
+        <div class="hdr"><h2>Quiz RGPD (10 questions)</h2>
+          <p class="muted">Cochez la/les bonne(s) réponse(s). Feedback détaillé à la validation.</p></div>
+        <div class="cnt list" id="quizRGPDContainer" aria-live="polite"></div>
+        <div class="cnt inline">
+          <button class="btn" id="validateRGPD">Valider</button>
+          <button class="btn ghost" id="resetRGPD">Réinitialiser</button>
+          <div class="score" id="scoreRGPD" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="analyzer" hidden>
+      <div class="card">
+        <div class="hdr"><h2>Analyseur de prompt (IA Act & RGPD)</h2>
+          <p class="muted">Collez un prompt. L’outil détecte les risques (données perso, catégories sensibles, mineurs, profilage, biométrie…) et propose une réécriture.</p></div>
+        <div class="cnt grid two">
+          <div class="col col-7">
+            <label for="promptInput" class="small muted">Votre prompt</label>
+            <textarea id="promptInput" placeholder="Ex. : Analyse ces entretiens d’embauche en identifiant les meilleurs candidats (noms, emails, âge, état de santé). Donne une note sur 100."></textarea>
+            <div class="inline" style="margin-top:10px">
+              <button class="btn" id="analyzeBtn">Analyser</button>
+              <button class="btn secondary" id="sampleBtn">Exemple</button>
+            </div>
+          </div>
+          <div class="col col-5">
+            <div class="q" id="analysisBox" aria-live="polite">
+              <div class="muted">Résultats de l’analyse s’affichent ici.</div>
+            </div>
+          </div>
+        </div>
+        <div class="cnt">
+          <h3>Réécriture assistée</h3>
+          <p class="muted">Une proposition anonymisée et plus conforme est générée automatiquement.</p>
+          <textarea id="rewriteBox" readonly placeholder="La réécriture apparaîtra ici après l’analyse."></textarea>
+          <div class="inline" style="margin-top:10px">
+            <button class="btn good" id="copyRewrite">Copier la réécriture</button>
+            <button class="btn ghost" id="clearAnalyzer">Effacer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cases" hidden>
+      <div class="card">
+        <div class="hdr"><h2>Cas pratiques de prompts</h2>
+          <p class="muted">Pour chaque cas, décidez si le prompt est conforme. Puis affichez la correction.</p></div>
+        <div class="cnt list" id="casesContainer"></div>
+        <div class="cnt inline">
+          <button class="btn" id="revealCases">Afficher toutes les corrections</button>
+          <button class="btn ghost" id="resetCases">Réinitialiser</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" hidden>
+      <div class="card">
+        <div class="hdr"><h2>Résultats & Suivi</h2></div>
+        <div class="cnt">
+          <div class="q">
+            <div class="grid two">
+              <div class="col col-7">
+                <h3>Tableau de bord</h3>
+                <p class="muted">Scores locaux (non envoyés). Réinitialisez pour un nouveau groupe.</p>
+                <ul>
+                  <li>Score IA Act : <span id="boardIA">0/0</span></li>
+                  <li>Score RGPD : <span id="boardRGPD">0/0</span></li>
+                  <li>Score total : <span id="boardTotal">0/0</span></li>
+                </ul>
+              </div>
+              <div class="col col-5">
+                <h3>Actions rapides</h3>
+                <div class="inline">
+                  <button class="btn secondary" id="resetAll">Tout réinitialiser</button>
+                  <button class="btn" data-go="home">Retour à l’accueil</button>
+                  <button class="btn ghost" id="runDiagnostics">Diagnostics</button>
+                </div>
+                <div id="diagnosticsPanel" class="small" style="margin-top:10px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="small muted" style="margin-top:14px">Astuce : ouvrez ce fichier sur les postes apprenants. Les résultats restent en local (session navigateur).</div>
+        </div>
+      </div>
+      <footer class="wrap">
+        <p class="small">© Votre organisme — Mini‑site pédagogique IA Act & RGPD. 
+          <span class="muted">Personnalisez le pied de page et les couleurs au besoin.</span>
+        </p>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+  // ————————————————
+  // Navigation simple
+  // ————————————————
+  const navButtons = document.querySelectorAll('nav button');
+  const sections = document.querySelectorAll('main section');
+  const goButtons = document.querySelectorAll('[data-go]');
+
+  function showSection(id){
+    sections.forEach(s => s.hidden = s.id !== id);
+    navButtons.forEach(b => b.classList.toggle('active', b.dataset.target === id));
+    // Assure l'initialisation dynamique des cas pratiques à l'ouverture de l'onglet
+    if(id === 'cases'){
+      const cc = document.getElementById('casesContainer');
+      if(cc && cc.children.length === 0){
+        try{ renderCases(); }catch(e){ console.error('Render cases failed:', e); }
+      }
+    }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  navButtons.forEach(b => b.addEventListener('click', () => showSection(b.dataset.target)));
+  goButtons.forEach(b => b.addEventListener('click', () => showSection(b.dataset.go)));
+
+  // ————————————————
+  // Banque de questions (synthèse formation)
+  // Note : ces contenus simplifient le droit pour un usage pédagogique.
+  // ————————————————
+  /** @type {{id:string, q:string, choices:string[], correct:number[], explain:string}[]} */
+  const quizIA = [
+    {id:'ia1', q:"Quelles pratiques sont généralement interdites par l’IA Act (hors exceptions strictes) ?", choices:[
+      "Reconnaissance faciale en temps réel dans l’espace public par des acteurs privés",
+      "Manipulation cognitive délibérée de groupes vulnérables",
+      "Systèmes de notation sociale par les autorités publiques",
+      "Génération d’images avec marquage d’IA"], correct:[0,1,2], explain:"L’IA Act encadre fortement certaines pratiques : manipulation cognitive, scoring social, et reconnaissance biométrique en temps réel dans l’espace public sont globalement prohibées (sauf quelques cas légaux très encadrés). Le marquage d’IA relève plutôt d’exigences de transparence, pas d’une interdiction."},
+    {id:'ia2', q:"Un <em>chatbot</em> conversationnel déployé sur un site doit…", choices:[
+      "Signaler qu’il ne s’agit pas d’un humain (transparence)",
+      "Recueillir systématiquement le consentement <em>RGPD</em> pour toute question",
+      "Être explicable au sens <em>IA Act</em> avec une documentation interne proportionnée",
+      "Empêcher l’export des conversations"], correct:[0,2], explain:"L’IA Act impose notamment une obligation de transparence pour les systèmes d’IA destinés à interagir avec des humains. L’explicabilité/documentation est attendue proportionnellement au risque. Le consentement RGPD dépend du traitement de données et de la base légale choisie."},
+    {id:'ia3', q:"Qu’est‑ce qui peut classer un usage en ‘à haut risque’ ?", choices:[
+      "Impact sur l’accès à l’emploi, l’éducation, les services essentiels",
+      "Usage purement ludique sans données personnelles",
+      "Fonctions de sécurité produits (ex. dispositifs médicaux)",
+      "Systèmes de recommandation vidéo grand public"], correct:[0,2], explain:"L’IA à haut risque inclut des domaines listés (accès à des services essentiels, sécurité de produits, etc.). Un usage ludique grand public sans données sensibles n’est généralement pas ‘haut risque’."},
+    {id:'ia4', q:"Pour un système ‘à haut risque’, l’IA Act exige notamment…", choices:[
+      "Gestion des risques, qualité des données, traçabilité, documentation",
+      "Zéro faux positifs tolérés",
+      "Surveillance humaine et cybersécurité",
+      "Audit de conformité et marquage CE le cas échéant"], correct:[0,2,3], explain:"Les exigences incluent la gestion des risques, la gouvernance des données, la surveillance humaine, la robustesse/cybersécurité, la documentation et la conformité (marquage CE, etc.). Zéro faux positif n’est pas exigé — on parle plutôt de niveaux de performance déclarés et surveillés."},
+    {id:'ia5', q:"Le filigranage/marquage de contenus générés par l’IA sert…", choices:[
+      "À informer le public et faciliter la détection",
+      "À rendre l’IA ‘à faible risque’",
+      "À remplacer la base légale RGPD",
+      "À lutter contre la désinformation générée"], correct:[0,3], explain:"Le marquage améliore la transparence et aide contre la désinformation. Il ne réduit pas en soi la catégorie de risque ni ne remplace les exigences RGPD."},
+    {id:'ia6', q:"Quelle affirmation est correcte ?", choices:[
+      "Tout modèle de fondation est interdit en Europe",
+      "Certains modèles doivent publier des informations techniques et respecter des obligations spécifiques",
+      "Les jeux de données d’entraînement ‘open’ dispensent de toute exigence",
+      "Aucune exigence de sécurité n’est requise pour les usages internes"], correct:[1], explain:"Les modèles de fondation (FMs) ont des obligations spécifiques (documentation, sécurité, rapports). Les autres affirmations sont incorrectes."},
+    {id:'ia7', q:"Exemple d’obligation de transparence côté utilisateur de l’IA :", choices:[
+      "Indiquer quand un contenu est généré ou manipulé par IA",
+      "Fournir les poids du modèle",
+      "Rendre publics tous les jeux d’entraînement",
+      "Informer en cas de deepfake"], correct:[0,3], explain:"La transparence côté utilisateur inclut l’information sur les contenus générés/manipulés et les deepfakes. Les poids du modèle et datasets ne sont pas requis côté utilisateur final."},
+    {id:'ia8', q:"Dans un prompt de recrutement qui ‘note’ les profils sur 100…", choices:[
+      "On touche potentiellement un cas d’usage à haut risque (accès à l’emploi)",
+      "Aucune exigence si le barème est interne",
+      "Il faut prévoir une surveillance humaine et éviter les biais",
+      "Le marquage IA dispense d’évaluer l’équité"], correct:[0,2], explain:"Le recrutement peut relever de l’IA à haut risque : prévoir surveillance humaine, évaluation des biais/équité, documentation et base légale RGPD adaptée."},
+    {id:'ia9', q:"La détection des émotions en milieu professionnel…", choices:[
+      "Est encadrée voire prohibée selon les contextes",
+      "Est toujours autorisée avec consentement",
+      "Peut relever d’une pratique interdite par l’IA Act",
+      "Ne pose aucun problème de vie privée"], correct:[0,2], explain:"La reconnaissance des émotions est particulièrement sensible et peut être prohibée selon les contextes listés dans l’IA Act."},
+    {id:'ia10', q:"Que faire si un cas d’usage touche des mineurs ?", choices:[
+      "Renforcer la transparence et la protection des données",
+      "Considérer l’intérêt supérieur de l’enfant",
+      "Pas d’impact réglementaire spécifique",
+      "Limiter la collecte au strict nécessaire"], correct:[0,1,3], explain:"Les mineurs exigent une vigilance accrue (intérêt supérieur de l’enfant, minimisation, transparence renforcée)."}
+  ];
+
+  const quizRGPD = [
+    {id:'rg1', q:"Quel(s) principe(s) s’applique(nt) à tout prompt traitant des données personnelles ?", choices:[
+      "Minimisation (uniquement les infos utiles)",
+      "Exactitude des données",
+      "Conservation illimitée par défaut",
+      "Limitation des finalités"], correct:[0,1,3], explain:"Principes RGPD clés : finalité, minimisation, exactitude, limitation de conservation, sécurité."},
+    {id:'rg2', q:"Qu’est‑ce qu’une ‘donnée personnelle’ ?", choices:[
+      "Toute info se rapportant à une personne identifiée ou identifiable",
+      "Seulement le nom et le prénom",
+      "Un identifiant en ligne pouvant permettre l’identification",
+      "Uniquement les données sensibles"], correct:[0,2], explain:"Sont inclus noms, emails, identifiants en ligne, etc. Les données sensibles sont une sous‑catégorie particulière."},
+    {id:'rg3', q:"Catégories particulières (sensibles) :", choices:[
+      "Santé, biométrie, opinions politiques, religion, orientation sexuelle…",
+      "Couleur préférée",
+      "Données syndicales",
+      "Niveau de batterie du téléphone"], correct:[0,2], explain:"Les catégories particulières incluent santé, biométrie, opinions politiques, croyances religieuses, orientation sexuelle, appartenance syndicale, etc."},
+    {id:'rg4', q:"Base(s) légale(s) fréquente(s) pour des prompts en contexte pro :", choices:[
+      "Intérêt légitime (après test de mise en balance)",
+      "Exécution d’un contrat",
+      "Consentement par défaut pour tout",
+      "Obligation légale selon le cas"], correct:[0,1,3], explain:"La base légale dépend du contexte. Le consentement n’est pas ‘par défaut’ et doit être libre et éclairé."},
+    {id:'rg5', q:"Dans un prompt, citer des noms complets et emails :", choices:[
+      "Est à éviter, préférer des identifiants anonymisés",
+      "Nécessite d’évaluer la base légale et la minimisation",
+      "Ne concerne pas le RGPD si c’est en interne",
+      "Peut exiger une information des personnes"], correct:[0,1,3], explain:"Même en interne, le RGPD s’applique. Minimisez les données et informez les personnes si nécessaire."},
+    {id:'rg6', q:"Quels risques en notant des candidats via l’IA ?", choices:[
+      "Biais/discrimination",
+      "Profilage de personnes physiques",
+      "Aucun si le modèle est open‑source",
+      "Atteinte potentielle aux droits (accès, rectification)"], correct:[0,1,3], explain:"Le profilage et les biais sont des risques majeurs ; le caractère open‑source du modèle ne supprime pas les obligations RGPD."},
+    {id:'rg7', q:"Mesures de sécurité de base :", choices:[
+      "Contrôle d’accès et journalisation",
+      "Chiffrement en transit/au repos selon le risque",
+      "Partage systématique par e‑mail",
+      "Principe du moindre privilège"], correct:[0,1,3], explain:"La sécurité comprend contrôle d’accès, chiffrement, moindre privilège, etc. Évitez les partages non sécurisés."},
+    {id:'rg8', q:"DPIA (analyse d’impact) :", choices:[
+      "Requise pour certains traitements à risque élevé",
+      "Jamais nécessaire pour les prompts",
+      "Peut être déclenchée par du profilage à grande échelle",
+      "Toujours remplacée par le consentement"], correct:[0,2], explain:"Une AIPD/DPIA est requise en cas de risque élevé (ex. profilage à grande échelle). Le consentement ne la remplace pas."},
+    {id:'rg9', q:"Droits des personnes :", choices:[
+      "Accès, rectification, effacement, opposition, limitation",
+      "Portabilité dans certains cas",
+      "Aucun droit si l’IA est utilisée",
+      "Information sur les traitements"], correct:[0,1,3], explain:"Les droits RGPD restent applicables quel que soit l’outil (IA incluse)."},
+    {id:'rg10', q:"Données de mineurs dans un prompt :", choices:[
+      "Prudence accrue, parfois consentement des titulaires de l’autorité parentale",
+      "Aucune précaution spécifique",
+      "Minimisation renforcée",
+      "Interdiction absolue en Europe"], correct:[0,2], explain:"Les mineurs nécessitent des garanties renforcées. Pas d’interdiction générale mais fortes précautions et bases légales adaptées."}
+  ];
+
+  // ————————————————
+  // Génération des quiz
+  // ————————————————
+  function renderQuiz(containerId, dataset){
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    dataset.forEach((q, idx) => {
+      const qEl = document.createElement('div');
+      qEl.className = 'q';
+      qEl.innerHTML = `
+        <div><strong>Q${idx+1}. </strong><span>${q.q}</span></div>
+        <div class="choices">
+          ${q.choices.map((c, i)=>`
+            <label><input type="checkbox" name="${q.id}" value="${i}"/> <span>${c}</span></label>
+          `).join('')}
+        </div>
+        <div class="feedback" id="fb-${q.id}" hidden></div>
+      `;
+      el.appendChild(qEl);
+    });
+  }
+  renderQuiz('quizIAContainer', quizIA);
+  renderQuiz('quizRGPDContainer', quizRGPD);
+
+  function validateQuiz(dataset, scoreBoxId){
+    let good=0, total=dataset.length;
+    dataset.forEach(q=>{
+      const inputs = [...document.querySelectorAll(`input[name="${q.id}"]`)];
+      const selected = inputs.filter(i=>i.checked).map(i=>+i.value).sort();
+      const correct = [...q.correct].sort();
+      const ok = JSON.stringify(selected)===JSON.stringify(correct);
+      const fb = document.getElementById(`fb-${q.id}`);
+      fb.hidden=false;
+      fb.className = 'feedback ' + (ok? 'ok':'ko');
+      if(ok){
+        good++;
+        fb.textContent = '✅ Bonne réponse ! ' + q.explain;
+      } else {
+        fb.innerHTML = '❌ Réponse incorrecte. <br><span class="muted">Attendu : ' + correct.map(i=>q.choices[i]).join('; ') + '</span><br>' + q.explain;
+      }
+      // verrouiller après validation
+      inputs.forEach(i=>i.disabled=true);
+    });
+    document.getElementById(scoreBoxId).textContent = `Score : ${good}/${total}`;
+    updateBoard();
+  }
+
+  function resetQuiz(dataset, containerId, scoreBoxId){
+    dataset.forEach(q=>{
+      const inputs = [...document.querySelectorAll(`input[name="${q.id}"]`)];
+      inputs.forEach(i=>{ i.checked=false; i.disabled=false; });
+      const fb = document.getElementById(`fb-${q.id}`);
+      fb.hidden=true; fb.textContent=''; fb.className='feedback';
+    });
+    document.getElementById(scoreBoxId).textContent = '';
+    // re-render (pour nettoyer tout écart)
+    renderQuiz(containerId, dataset);
+  }
+
+  document.getElementById('validateIA').addEventListener('click', ()=>validateQuiz(quizIA,'scoreIA'));
+  document.getElementById('validateRGPD').addEventListener('click', ()=>validateQuiz(quizRGPD,'scoreRGPD'));
+  document.getElementById('resetIA').addEventListener('click', ()=>resetQuiz(quizIA,'quizIAContainer','scoreIA'));
+  document.getElementById('resetRGPD').addEventListener('click', ()=>resetQuiz(quizRGPD,'quizRGPDContainer','scoreRGPD'));
+
+  // ————————————————
+  // Analyseur de prompt (heuristique pédagogique)
+  // ————————————————
+  const patterns = {
+    personal:[
+      /\b(nom|prénom|adresse|email|mail|e\-mail|téléphone|numéro|immatriculation|siret|sirene|siren|iban|carte|identité|identifiant|matricule)\b/gi,
+      /\b\d{2}\/\d{2}\/\d{4}\b/g, // date JJ/MM/AAAA
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+      /\b\+?\d[\d\s().-]{7,}\b/g
+    ],
+    special:[
+      /\b(santé|médical|handicap|religion|croyance|politique|orientation\s+sexuelle|ethnie|racial|biométrie|données\s+génétiques|syndical)\b/gi
+    ],
+    minors:[/\b(mineur|enfant|moins\s+de\s+18|collégien|lycéen|élève)\b/gi],
+    profiling:[/\b(profilage|score|notation|classer|noter|évaluer\s+des\s+personnes)\b/gi],
+    biometrics:[/\b(reconnaissance\s+faciale|empreinte|iris|voix|biométrique|émotion)\b/gi],
+    publicSurv:[/\b(espace\s+public|vidéosurveillance|caméra\s+en\s+temps\s+r[ée]el)\b/gi],
+    transparency:[/\b(chatbot|assistant|conversationnel)\b/gi]
+  };
+
+  function analyzePrompt(text){
+    const findings=[];
+    const push = (type, msg)=> findings.push({type, msg});
+
+    // Données personnelles
+    if(patterns.personal.some(r=>r.test(text))){
+      push('RGPD', 'Présence possible de données personnelles (identifiants, contacts, dates). Appliquez minimisation + base légale.');
+    }
+    // Catégories particulières
+    if(patterns.special.some(r=>r.test(text))){
+      push('RGPD+', 'Catégories particulières détectées (santé, religion, biométrie, etc.). Nécessite conditions strictes.');
+    }
+    // Mineurs
+    if(patterns.minors.some(r=>r.test(text))){
+      push('Mineurs', 'Référence à des mineurs : protections renforcées, intérêt supérieur de l’enfant.');
+    }
+    // Profilage/notation
+    if(patterns.profiling.some(r=>r.test(text))){
+      push('Profilage', 'Attention au profilage/notation de personnes (risque élevé, DPIA potentielle).');
+    }
+    // Biométrie
+    if(patterns.biometrics.some(r=>r.test(text))){
+      push('Biométrie', 'Reconnaissance biométrique/émotionnelle : fortement encadrée, parfois interdite (IA Act).');
+    }
+    // Espace public/temps réel
+    if(patterns.publicSurv.some(r=>r.test(text))){
+      push('Surveillance', 'Surveillance en espace public/temps réel : peut relever des pratiques interdites.');
+    }
+    // Transparence chatbot
+    if(patterns.transparency.some(r=>r.test(text))){
+      push('Transparence', 'Interactions homme‑IA : informer clairement qu’il s’agit d’une IA (IA Act).');
+    }
+
+    // Conseils génériques
+    const tips = [
+      '• Limitez les données aux stricts besoins (minimisation).',
+      '• Définissez la finalité et la base légale (RGPD).',
+      '• Préférez des identifiants anonymisés/pseudonymisés.',
+      '• Prévenez les biais : ajoutez un contrôle humain pour les décisions importantes.',
+      '• Conservez les données le minimum de temps nécessaire.',
+      '• Informez les personnes lorsque c’est requis (transparence).'
+    ];
+
+    return {findings, tips};
+  }
+
+  function sanitizePrompt(text){
+    // Remplacements simples pour anonymiser
+    let out = text
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[EMAIL]')
+      .replace(/\b\+?\d[\d\s().-]{7,}\b/g, '[TELEPHONE]')
+      .replace(/\b([A-Z]{2}\d{2}[A-Z0-9]{11,30})\b/gi, '[IBAN]')
+      .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '[DATE]')
+      .replace(/\b(siret|siren|sirene)\b/gi, '[IDENTIFIANT]')
+      .replace(/\b(nom|prénom)\b/gi, '[IDENTITE]')
+      .replace(/\b(adresse|domicile)\b/gi, '[ADRESSE]');
+
+    // Ajout de garde‑fous (instructions conformes)
+    const safeguards = `\n\n[Contraintes conformité]\n- Utiliser uniquement des données anonymisées/pseudonymisées.\n- Évaluer les biais et fournir une explication claire et vérifiable.\n- Intégrer une validation humaine avant toute décision ayant un impact significatif.\n- Ne conserver aucun identifiant direct dans la sortie.\n- Mentionner que la réponse est générée par une IA.`;
+
+    return out.trim() + safeguards;
+  }
+
+  document.getElementById('sampleBtn').addEventListener('click', ()=>{
+    document.getElementById('promptInput').value =
+      'Classe ces CV et donne une note sur 100. Liste les meilleurs avec nom, email, âge et état de santé. Utilise la reconnaissance émotionnelle sur les vidéos des entretiens.';
+  });
+
+  document.getElementById('analyzeBtn').addEventListener('click', ()=>{
+    const text = document.getElementById('promptInput').value || '';
+    const box = document.getElementById('analysisBox');
+    if(!text.trim()){
+      box.innerHTML = '<div class="feedback hint">Entrez un prompt à analyser.</div>';
+      document.getElementById('rewriteBox').value='';
+      return;
+    }
+    const {findings, tips} = analyzePrompt(text);
+
+    if(findings.length===0){
+      box.innerHTML = '<div class="feedback ok">✅ Aucun indicateur de risque détecté par les règles simples. Vérifiez malgré tout la finalité, la minimisation et la base légale.</div>';
+    } else {
+      box.innerHTML = `
+        <div class="feedback ko"><strong>Risques détectés :</strong>
+          <ul style="margin:6px 0 0 18px">${findings.map(f=>`<li><span class="tag">${f.type}</span> ${f.msg}</li>`).join('')}</ul>
+        </div>
+        <div class="feedback hint" style="margin-top:10px"><strong>Conseils :</strong><br>${tips.join('<br>')}</div>
+      `;
+    }
+
+    document.getElementById('rewriteBox').value = sanitizePrompt(text);
+  });
+
+  document.getElementById('copyRewrite').addEventListener('click', async ()=>{
+    const txt = document.getElementById('rewriteBox').value;
+    if(!txt) return;
+    try{ await navigator.clipboard.writeText(txt); alert('Réécriture copiée dans le presse‑papiers.'); }catch(e){ alert('Copie impossible. Sélectionnez et copiez manuellement.'); }
+  });
+  document.getElementById('clearAnalyzer').addEventListener('click', ()=>{
+    document.getElementById('promptInput').value='';
+    document.getElementById('analysisBox').innerHTML='<div class="muted">Résultats de l’analyse s’affichent ici.</div>';
+    document.getElementById('rewriteBox').value='';
+  });
+
+  // ————————————————
+  // Cas pratiques
+  // ————————————————
+  const cases = [
+    {id:'c1', prompt:"Transcris ces interviews et détecte l’émotion dominante de chaque candidat.", good:false, why:"La détection des émotions est un cas sensible pouvant être prohibée (IA Act)."},
+    {id:'c2', prompt:"Rédige un résumé de cette politique interne sans inclure aucun nom ni email.", good:true, why:"Minimisation : pas de données personnelles directes dans le résultat."},
+    {id:'c3', prompt:"Repère les fraudes en scannant en temps réel les visages filmés dans notre magasin.", good:false, why:"Reconnaissance biométrique en temps réel en espace public : fortement encadrée/prohibée."},
+    {id:'c4', prompt:"Nettoie ce jeu de données en remplaçant nom/prénom/email par des identifiants aléatoires.", good:true, why:"Pseudonymisation avant traitement : meilleure conformité RGPD."},
+    {id:'c5', prompt:"Classe les dossiers d’aide sociale et bloque automatiquement ceux avec un score < 50.", good:false, why:"Décision automatisée à fort impact sans contrôle humain : non conforme (RGPD & potentiellement haut risque IA Act)."},
+    {id:'c6', prompt:"Génère un message et ajoute : ‘Ce contenu est généré par une IA’.", good:true, why:"Transparence envers l’utilisateur final."}
+  ];
+
+  // cas supplémentaires (pour varier les entraînements, sans modifier les cas existants)
+  const extraCases = [
+    {id:'c7', prompt:"Notre assistant de chat répond aux usagers. Doit‑il indiquer qu’il est une IA ?", good:true, why:"Obligation de transparence lorsque l’utilisateur interagit avec une IA."},
+    {id:'c8', prompt:"Pour notre newsletter, collecte les scans de CNI afin de confirmer l’identité.", good:false, why:"Collecte disproportionnée et très sensible ; préférer des moyens moins intrusifs et base légale adéquate."},
+    {id:'c9', prompt:"Remplace systématiquement les noms et emails par des identifiants aléatoires avant traitement.", good:true, why:"Pseudonymisation/minimisation favorables à la conformité."},
+    {id:'c10', prompt:"Analyse en temps réel les visages des passants pour détecter les voleurs.", good:false, why:"Reconnaissance biométrique en espace public/temps réel : pratique généralement prohibée/fortement encadrée."}
+  ];
+  cases.push(...extraCases);
+
+  function renderCases(){
+    const el = document.getElementById('casesContainer');
+    el.innerHTML='';
+    cases.forEach((c, idx)=>{
+      const wrap = document.createElement('div');
+      wrap.className='q';
+      wrap.innerHTML = `
+        <div><strong>Cas ${idx+1}.</strong> ${c.prompt}</div>
+        <div class="inline" style="margin-top:10px">
+          <button class="btn good" data-ans="true" data-id="${c.id}">Conforme</button>
+          <button class="btn bad" data-ans="false" data-id="${c.id}">Non conforme</button>
+          <span id="casefb-${c.id}" class="feedback" hidden></span>
+        </div>
+      `;
+      el.appendChild(wrap);
+    });
+  }
+  renderCases();
+
+  document.getElementById('casesContainer').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-ans]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const ans = btn.dataset.ans === 'true';
+    const ref = cases.find(x=>x.id===id);
+    const fb = document.getElementById('casefb-'+id);
+    const ok = ans === ref.good;
+    fb.hidden=false; fb.className='feedback ' + (ok? 'ok':'ko');
+    fb.textContent = (ok? '✅ Correct. ':'❌ Incorrect. ') + ref.why;
+  });
+
+  document.getElementById('revealCases').addEventListener('click', ()=>{
+    cases.forEach(c=>{
+      const fb = document.getElementById('casefb-'+c.id);
+      fb.hidden=false; fb.className='feedback hint';
+      fb.textContent = (c.good? 'Conforme. ':'Non conforme. ') + c.why;
+    });
+  });
+  document.getElementById('resetCases').addEventListener('click', renderCases);
+
+  // ————————————————
+  // Tableau de bord
+  // ————————————————
+  function updateBoard(){
+    const sIA = document.getElementById('scoreIA').textContent.match(/(\d+)\/(\d+)/);
+    const sRG = document.getElementById('scoreRGPD').textContent.match(/(\d+)\/(\d+)/);
+    const ia = sIA? [parseInt(sIA[1]), parseInt(sIA[2])] : [0,0];
+    const rg = sRG? [parseInt(sRG[1]), parseInt(sRG[2])] : [0,0];
+    document.getElementById('boardIA').textContent = ia[0] + '/' + ia[1];
+    document.getElementById('boardRGPD').textContent = rg[0] + '/' + rg[1];
+    document.getElementById('boardTotal').textContent = (ia[0]+rg[0]) + '/' + (ia[1]+rg[1]);
+  }
+  updateBoard();
+
+  document.getElementById('resetAll').addEventListener('click', ()=>{
+    resetQuiz(quizIA,'quizIAContainer','scoreIA');
+    resetQuiz(quizRGPD,'quizRGPDContainer','scoreRGPD');
+    renderCases();
+    updateBoard();
+  });
+
+  // Démarrage sur Accueil
+  showSection('home');
+    
+  // ————————————————
+  // Diagnostics (petits tests intégrés)
+  // ————————————————
+  function runSelfTests(){
+    const results = [];
+    try{
+      results.push(['Sections présentes', ['home','quiz-ia','quiz-rgpd','analyzer','cases','results'].every(id=>document.getElementById(id))]);
+      results.push(['Boutons nav', document.querySelectorAll('nav button').length >= 6]);
+      results.push(['Boutons go', document.querySelectorAll('[data-go]').length >= 1]);
+      const hasListenerFix = (()=>{ let ok=false; const btn=document.querySelector('[data-go]'); if(btn){ const ds = btn.dataset.go; ok = !!ds; } return ok; })();
+      results.push(['data-go lisible (dataset.go)', hasListenerFix]);
+      const hasCases = (()=>{ const c = document.getElementById('casesContainer'); return !!(c && c.children && c.children.length>0); })();
+      results.push(['Cas pratiques peuplés', hasCases]);
+    }catch(e){ console.error(e); results.push(['Exception', false]); }
+
+    const okAll = results.every(r=>r[1]);
+    const panel = document.getElementById('diagnosticsPanel');
+    if(panel){
+      panel.innerHTML = `<div class="feedback ${okAll?'ok':'ko'}"><strong>Diagnostics :</strong><br>${results.map(r=>`• ${r[0]} : ${r[1]?'OK':'KO'}`).join('<br>')}</div>`;
+    } else {
+      console.log('Diagnostics', results);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('runDiagnostics');
+    if(btn){ btn.addEventListener('click', runSelfTests); }
+  });
+
+  </script>
+</body>
+</html>
